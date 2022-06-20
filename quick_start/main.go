@@ -2,18 +2,19 @@ package main
 
 import (
 	"fmt"
-	"github.com/nyan233/littlerpc"
+	"github.com/nyan233/littlerpc/impl/client"
+	"github.com/nyan233/littlerpc/impl/server"
 )
 
 type Hello int
 
-func (receiver Hello) Hello(s string) int {
+func (receiver Hello) Hello(s string) (int,error) {
 	fmt.Println(s)
-	return 1 << 20
+	return 1 << 20,nil
 }
 
 func main() {
-	server := littlerpc.NewServer(littlerpc.WithAddressServer(":1234"))
+	server := server.NewServer(server.WithAddressServer(":1234"))
 	err := server.Elem(new(Hello))
 	if err != nil {
 		panic(err)
@@ -23,7 +24,10 @@ func main() {
 		panic(err)
 	}
 	clientInfo := new(Hello)
-	client := littlerpc.NewClient(littlerpc.WithAddressClient(":1234"))
+	client,err := client.NewClient(client.WithAddressClient(":1234"))
+	if err != nil {
+		panic(err)
+	}
 	_ = client.BindFunc(clientInfo)
 	rep, _ := client.Call("Hello.Hello", "hello world!")
 	fmt.Println(rep[0])

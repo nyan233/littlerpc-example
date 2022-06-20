@@ -2,7 +2,8 @@ package main
 
 import (
 	"fmt"
-	"github.com/nyan233/littlerpc"
+	"github.com/nyan233/littlerpc/impl/client"
+	"github.com/nyan233/littlerpc/impl/server"
 	"math"
 	"time"
 )
@@ -23,7 +24,7 @@ func (h *Hello) Hello(name string, id int64) (*UserJson, error) {
 }
 
 func Server() {
-	server := littlerpc.NewServer(littlerpc.WithAddressServer("127.0.0.1:8080","127.0.0.1:9090"))
+	server := server.NewServer(server.WithAddressServer("127.0.0.1:8080","127.0.0.1:9090"))
 	err := server.Elem(&Hello{})
 	if err != nil {
 		panic(err)
@@ -35,8 +36,11 @@ func Server() {
 }
 
 func Client() {
-	c := littlerpc.NewClient(littlerpc.WithBalance("roundRobin"))
-	c.BindFunc(&Hello{})
+	c,err := client.NewClient(client.WithBalance("roundRobin"))
+	if err != nil {
+		panic(err)
+	}
+	_ = c.BindFunc(&Hello{})
 	rep, err := c.Call("Hello.Hello", "Tony", 1<<20)
 	if err != nil {
 		panic(err)
@@ -51,8 +55,11 @@ func Client() {
 func main() {
 	Server()
 	// 根据规则开启负载均衡
-	littlerpc.ClientOpenBalance("live","live://127.0.0.1:8080;127.0.0.1:9090",
+	err := client.OpenBalance("live", "live://127.0.0.1:8080;127.0.0.1:9090",
 		time.Duration(math.MaxInt64))
+	if err != nil {
+		panic(err)
+	}
 	Client()
 	Client()
 }

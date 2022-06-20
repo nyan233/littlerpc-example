@@ -1,12 +1,20 @@
 package main
 
 import (
-	"github.com/nyan233/littlerpc"
+	"github.com/nyan233/littlerpc/impl/client"
+	"github.com/nyan233/littlerpc/impl/server"
+	"log"
+	"net/http"
+	_ "net/http/pprof"
+	"time"
 )
 
 
 func main() {
-	server := littlerpc.NewServer(littlerpc.WithAddressServer(":1234"))
+	go func() {
+		log.Println(http.ListenAndServe(":6060", nil))
+	}()
+	server := server.NewServer(server.WithAddressServer(":1234"))
 	i1 := new(HelloServer1)
 	i2 := new(HelloServer2)
 	err := server.Elem(i1)
@@ -19,11 +27,18 @@ func main() {
 	}
 	_ = server.Start()
 	defer server.Stop()
-	client1 := littlerpc.NewClient(littlerpc.WithAddressClient(":1234"))
+	time.Sleep(time.Second * 100000)
+	client1,err := client.NewClient(client.WithAddressClient(":1234"))
+	if err != nil {
+		panic(err)
+	}
 	ci1 := NewHelloServer1Proxy(client1)
-	client2 := littlerpc.NewClient(littlerpc.WithAddressClient(":1234"))
+	client2 ,err := client.NewClient(client.WithAddressClient(":1234"))
+	if err != nil {
+		panic(err)
+	}
 	ci2 := NewHelloServer2Proxy(client2)
 	println(ci1.Hello())
-	ci2.Init("my name is server 2")
+	_ = ci2.Init("my name is server 2")
 	println(ci2.Hello())
 }

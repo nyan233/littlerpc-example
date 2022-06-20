@@ -2,7 +2,8 @@ package main
 
 import (
 	"fmt"
-	"github.com/nyan233/littlerpc"
+	"github.com/nyan233/littlerpc/impl/client"
+	"github.com/nyan233/littlerpc/impl/server"
 )
 
 type Hello struct{}
@@ -20,7 +21,7 @@ func (h *Hello) Hello(name string, id int64) (*UserJson, error) {
 }
 
 func Server() {
-	server := littlerpc.NewServer(littlerpc.WithAddressServer(":1234"))
+	server := server.NewServer(server.WithAddressServer(":1234"))
 	err := server.Elem(&Hello{})
 	if err != nil {
 		panic(err)
@@ -32,14 +33,19 @@ func Server() {
 }
 
 func Client() {
-	c := littlerpc.NewClient(littlerpc.WithAddressClient(":1234"))
-	c.BindFunc(&Hello{})
+	c,err := client.NewClient(client.WithAddressClient(":1234"))
+	if err != nil {
+		panic(err)
+	}
+	_ = c.BindFunc(&Hello{})
 	rep, err := c.Call("Hello.Hello", "Tony", 1<<20)
 	if err != nil {
 		panic(err)
 	}
 	user := rep[0].(*UserJson)
+	uErr,_ := rep[1].(error)
 	fmt.Println(user)
+	fmt.Println(uErr)
 	if err != nil {
 		panic(err)
 	}
